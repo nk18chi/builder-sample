@@ -1,4 +1,5 @@
 import { builder, BuilderComponent, BuilderContent } from "@builder.io/react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 
 builder.init(process.env.NEXT_PUBLIC_BUILDER_PUBLIC_API_KEY || "");
@@ -15,6 +16,16 @@ export async function getServerSideProps({
         options: { enrich: true },
       })
       .toPromise()) || null;
+
+  if (data?.data?.redirect?.destinationUrl) {
+    return {
+      redirect: {
+        destination: data.data.redirect.destinationUrl,
+        permanent: true,
+      },
+    };
+  }
+
   const template =
     (await builder
       .get("blog-article-section-template", { options: { enrich: true } })
@@ -42,6 +53,27 @@ export default function ThingsToDoPage({ data, template, sections }: any) {
 
   return (
     <>
+      <Head>
+        <title>{data.data.seoTitle}</title>
+        <meta name="description" content={data.data.seoDescription} />
+        <meta property="og:title" content={data.data.openGraph.title} />
+        <meta
+          property="og:description"
+          content={data.data.openGraph.description}
+        />
+        <meta property="og:image" content={data.data.openGraph.image} />
+        <meta property="og:url" content={data.data.openGraph.url} />
+        <meta property="og:type" content={data.data.openGraph.type} />
+        {data.data.noIndex && <meta name="robots" content="noindex" />}
+        {data.data.canonical && (
+          <link rel="canonical" href={data.data.canonical} />
+        )}
+        {data.data.structuredData && (
+          <script type="application/ld+json">
+            {JSON.stringify(data.data.structuredData)}
+          </script>
+        )}
+      </Head>
       <BuilderContent model="blog-article" content={data}>
         {(_, __, fullContent) => {
           return (
